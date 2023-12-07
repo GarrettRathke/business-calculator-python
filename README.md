@@ -1,2 +1,2 @@
 # business-calculator-python
-A business calculator UI written in Python with QT
+A simple business calculator UI written in Python with QT on Ubuntu Linux.
