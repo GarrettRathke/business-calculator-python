@@ -28,8 +28,8 @@ def calculate_finances_bulk():
 
     with open('business-finances-combinatorics.csv', 'w', newline='') as file:
         writer = csv.writer(file)
-        field = ["gross_monthly_revenue", "monthly_expenses", "net_monthly_profit", "number_of_users", "teams_tier_price", "primary_engineer_pay_rate",
-                 "primary_sales_pay_rate", "savings_rate"]
+        field = ["gross_monthly_revenue", "monthly_expenses", "net_monthly_profit", "number_of_users", "teams_tier_price", "primary_engineer_pay_percent", "primary_engineer_pay",
+                 "primary_sales_pay_percent", "primary_sales_pay", "savings_percent", "savings"]
 
         writer.writerow(field)
         for number_of_users in range(100, 2000, 100):
@@ -43,6 +43,6 @@ def calculate_finances_bulk():
                                                      (float(primary_engineer_pay_rate) / 100) * profit_margin,
                                                      (float(primary_sales_pay_rate) / 100) * profit_margin, (float(savings_rate) / 100) * profit_margin, corporate_tax_rate))
                                 writer.writerow([calculation_totals.gross_monthly_revenue, calculation_totals.total_monthly_expenses, calculation_totals.net_monthly_profit, number_of_users, teams_tier_price,
-                                                 primary_engineer_pay_rate,
-                                                 primary_sales_pay_rate, savings_rate])
+                                                 primary_engineer_pay_rate, calculation_totals.gross_monthly_revenue * primary_engineer_pay_rate,
+                                                 primary_sales_pay_rate, calculation_totals.gross_monthly_revenue * primary_sales_pay_rate, savings_rate, (calculation_totals.gross_monthly_revenue * savings_rate) + calculation_totals.net_monthly_profit])
     print('done calculating finances in bulk!')
