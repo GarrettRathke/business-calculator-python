@@ -3,10 +3,6 @@ from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLa
 import babel.numbers
 
 
-def on_click():
-    print('I\'ve been clicked')
-
-
 # TODO: field validation
 # TODO: add unit tests
 
