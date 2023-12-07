@@ -1,7 +1,8 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QMessageBox
 import babel.numbers
-
+from calculate import calculate_finance_variables, calculate_finances_bulk
+from finances import FinanceVariables
 
 # TODO: field validation
 # TODO: add unit tests
@@ -80,19 +81,27 @@ def window():
                 grid.addWidget(widgets[row][group][key], row, column)
                 column += 1
 
-    button = QPushButton('Calculate')
-    button.clicked.connect(calculate)
-    button.setStyleSheet('background-color: #4CAF50; color: white; font-size: 20px; font-weight: bold; border-radius: '
-                         '10px; margin-top:'
-                         '20px; margin-bottom: 10px;')
-    grid.addWidget(button, 6, 0, 1, 4)
+    calculate_finance_variables_button = QPushButton('Calculate Finance Variables')
+    calculate_finance_variables_button.clicked.connect(calculate)
+    calculate_finance_variables_button.setStyleSheet('background-color: #4CAF50; color: white; font-size: 20px; '
+                                                     'font-weight: bold; border-radius:'
+                                                     '10px; margin-top:'
+                                                     '20px; margin-bottom: 10px;')
+    grid.addWidget(calculate_finance_variables_button, 6, 0, 1, 4)
+
+    calculate_bulk_finances_button = QPushButton('Calculate Bulk Finances')
+    calculate_bulk_finances_button.clicked.connect(calculate_finances_bulk)
+    calculate_bulk_finances_button.setStyleSheet('background-color: #4CAF50; color: white; font-size: 20px; '
+                                                 'font-weight: bold; border-radius:'
+                                                 '10px; margin-top:'
+                                                 '20px; margin-bottom: 10px;')
+    grid.addWidget(calculate_bulk_finances_button, 7, 0, 1, 4)
 
     widget.show()
     sys.exit(app.exec_())
 
 
 def calculate():
-    print('calculating')
     profit_margin = float(widgets[1]['profit_margin']['input_box'].text()) / 100
     corporate_tax_rate = float(widgets[1]['corporate_tax_rate']['input_box'].text()) / 100
     primary_engineer_pay_rate = (float(
@@ -108,33 +117,40 @@ def calculate():
 
     # calculation
     number_of_users = 100
-    gross_monthly_revenue = number_of_users * teams_tier_price
-    total_monthly_expenses = initial_monthly_expenses + (gross_monthly_revenue * corporate_tax_rate) + (
-            gross_monthly_revenue * primary_engineer_pay_rate) + (gross_monthly_revenue * primary_sales_pay_rate) + (
-                                     gross_monthly_revenue * savings_rate)
-    net_monthly_profit = gross_monthly_revenue - total_monthly_expenses
+    calculation_totals = calculate_finance_variables(
+        FinanceVariables(number_of_users, teams_tier_price, initial_monthly_expenses, primary_engineer_pay_rate,
+                         primary_sales_pay_rate, savings_rate, corporate_tax_rate))
 
     # formatting
-    formatted_gross_monthly_revenue = babel.numbers.format_currency(gross_monthly_revenue, "USD", locale='en_US')
-    formatted_total_monthly_expenses = babel.numbers.format_currency(total_monthly_expenses, "USD", locale='en_US')
-    formatted_net_monthly_profit = babel.numbers.format_currency(net_monthly_profit, "USD", locale='en_US')
-    formatted_corporate_monthly_taxes = babel.numbers.format_currency(gross_monthly_revenue * corporate_tax_rate, "USD",
-                                                                      locale='en_US')
-    formatted_primary_engineer_monthly_pay = babel.numbers.format_currency(gross_monthly_revenue * primary_engineer_pay_rate,
-                                                                     "USD", locale='en_US')
-    formatted_primary_sales_monthly_pay = babel.numbers.format_currency(gross_monthly_revenue * primary_sales_pay_rate, "USD",
-                                                                  locale='en_US')
-    formatted_monthly_savings = babel.numbers.format_currency(
-        (gross_monthly_revenue * savings_rate) + net_monthly_profit, "USD", locale='en_US')
-    formatted_new_hire_engineer_monthly_salary = babel.numbers.format_currency(new_hire_engineer_monthly_salary, "USD", locale='en_US')
-    formatted_new_hire_engineer_yearly_cost = babel.numbers.format_currency(new_hire_engineer_yearly_cost, "USD", locale='en_US')
-    formatted_new_hire_engineer_monthly_cost = babel.numbers.format_currency(new_hire_engineer_monthly_cost, "USD", locale='en_US')
+    formatted_gross_monthly_revenue = money_string_format(calculation_totals.gross_monthly_revenue)
+    formatted_total_monthly_expenses = money_string_format(calculation_totals.total_monthly_expenses)
+    formatted_net_monthly_profit = money_string_format(calculation_totals.net_monthly_profit)
+    formatted_corporate_monthly_taxes = money_string_format(
+        calculation_totals.gross_monthly_revenue * corporate_tax_rate)
+    formatted_primary_engineer_monthly_pay = money_string_format(
+        calculation_totals.gross_monthly_revenue * primary_engineer_pay_rate)
+    formatted_primary_sales_monthly_pay = money_string_format(
+        calculation_totals.gross_monthly_revenue * primary_sales_pay_rate)
+    formatted_monthly_savings = money_string_format(
+        (calculation_totals.gross_monthly_revenue * savings_rate) + calculation_totals.net_monthly_profit)
+    formatted_new_hire_engineer_monthly_salary = money_string_format(new_hire_engineer_monthly_salary)
+    formatted_new_hire_engineer_yearly_cost = money_string_format(new_hire_engineer_yearly_cost)
+    formatted_new_hire_engineer_monthly_cost = money_string_format(new_hire_engineer_monthly_cost)
 
-    display_calculation_results(formatted_gross_monthly_revenue, formatted_total_monthly_expenses, formatted_net_monthly_profit, formatted_corporate_monthly_taxes, formatted_monthly_savings, formatted_primary_engineer_monthly_pay, formatted_primary_sales_monthly_pay, formatted_new_hire_engineer_monthly_salary,
+    display_calculation_results(formatted_gross_monthly_revenue, formatted_total_monthly_expenses,
+                                formatted_net_monthly_profit, formatted_corporate_monthly_taxes,
+                                formatted_monthly_savings, formatted_primary_engineer_monthly_pay,
+                                formatted_primary_sales_monthly_pay, formatted_new_hire_engineer_monthly_salary,
                                 formatted_new_hire_engineer_monthly_cost, formatted_new_hire_engineer_yearly_cost)
 
 
-def display_calculation_results(gross_monthly_revenue, total_monthly_expenses, net_monthly_profit, corporate_monthly_taxes, monthly_savings, primary_engineer_monthly_pay, primary_sales_monthly_pay, new_hire_engineer_monthly_salary,
+def money_string_format(dollar_amount: float):
+    return babel.numbers.format_currency(dollar_amount, "USD", locale='en_US')
+
+
+def display_calculation_results(gross_monthly_revenue, total_monthly_expenses, net_monthly_profit,
+                                corporate_monthly_taxes, monthly_savings, primary_engineer_monthly_pay,
+                                primary_sales_monthly_pay, new_hire_engineer_monthly_salary,
                                 new_hire_engineer_monthly_cost, new_hire_engineer_yearly_cost):
     msg = QMessageBox()
     msg.setMinimumSize(400, 200)
@@ -144,8 +160,14 @@ def display_calculation_results(gross_monthly_revenue, total_monthly_expenses, n
                   "%s \nPrimary Sales Monthly Pay: %s \nNew Hire Engineer Monthly Pay: %s \nNew Hire Engineer Total " \
                   "Monthly Corporate Cost: %s \nNew Hire Engineer Total Yearly Cost: %s \n" % (gross_monthly_revenue,
                                                                                                total_monthly_expenses,
-                                                                    net_monthly_profit, corporate_monthly_taxes,
-                                                                    monthly_savings, primary_engineer_monthly_pay, primary_sales_monthly_pay, new_hire_engineer_monthly_salary, new_hire_engineer_monthly_cost, new_hire_engineer_yearly_cost)
+                                                                                               net_monthly_profit,
+                                                                                               corporate_monthly_taxes,
+                                                                                               monthly_savings,
+                                                                                               primary_engineer_monthly_pay,
+                                                                                               primary_sales_monthly_pay,
+                                                                                               new_hire_engineer_monthly_salary,
+                                                                                               new_hire_engineer_monthly_cost,
+                                                                                               new_hire_engineer_yearly_cost)
     msg.setText(msg_content)
     msg.setWindowTitle("Calculation Results")
     msg.setStandardButtons(QMessageBox.Ok)
